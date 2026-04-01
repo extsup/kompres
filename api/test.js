@@ -11,7 +11,7 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const { url } = req.query;
+  const { url, ...extraParams } = req.query; // ambil semua parameter selain url
   if (!url) return res.status(400).json({ error: 'Parameter url wajib diisi' });
 
   let imageUrl;
@@ -22,6 +22,11 @@ module.exports = async function handler(req, res) {
   } catch {
     return res.status(400).json({ error: 'URL tidak valid' });
   }
+
+  // Gabungkan parameter tambahan ke URL gambar asli
+  Object.entries(extraParams).forEach(([key, value]) => {
+    imageUrl.searchParams.set(key, value);
+  });
 
   try {
     const referer = Object.entries(REFERER_MAP).find(([key]) => imageUrl.hostname.includes(key))?.[1] || null;
