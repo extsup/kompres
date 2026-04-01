@@ -1,0 +1,49 @@
+{
+  "version": 2,
+  "functions": {
+    "api/gambar.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "api/*.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, s-maxage=31536000, immutable"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, OPTIONS"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/image",
+      "destination": "/api/gambar"
+    },
+    {
+      "source": "/test",
+      "destination": "/api/test"
+    },
+    {
+      "source": "/cover/:w/:h/:proto/:url*",
+      "destination": "/api/gambar?w=:w&h=:h&url=:proto://:url*"
+    }
+  ]
+}
