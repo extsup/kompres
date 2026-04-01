@@ -1,0 +1,41 @@
+name: Clean Repository (Keep README)
+
+on:
+  workflow_dispatch:  # Hanya berjalan saat dipicu manual
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Izin untuk push ke repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ambil seluruh history agar bisa menghapus semua file
+
+      - name: Remove all tracked files except README.md and .github folder
+        run: |
+          # Hapus semua file yang terdaftar di Git, kecuali README.md dan yang berada di .github/
+          git ls-files | grep -v '^README.md$' | grep -v '^.github/' | xargs git rm -f || true
+
+      - name: Remove all untracked files and folders (except .git and .github)
+        run: |
+          # Hapus file dan folder yang tidak terdaftar di Git, namun jangan sentuh .git dan .github
+          git clean -fdx -e .github
+
+      - name: Ensure README.md is present (if missing)
+        run: |
+          if [ ! -f README.md ]; then
+            echo "# Repository Name" > README.md
+            git add README.md
+          fi
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Clean repository: keep only README.md and .github folder" || echo "No changes to commit"
+          git push
