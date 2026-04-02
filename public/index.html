@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Proxy — wsrv-like</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --border: #222;
+    --accent: #c8ff00;
+    --accent2: #ff6b35;
+    --text: #e8e8e8;
+    --muted: #555;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    min-height: 100vh;
+    padding: 48px 24px;
+  }
+
+  .noise {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    opacity: .03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 48px;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+    color: var(--accent);
+  }
+
+  .badge {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+  }
+
+  .section {
+    margin-bottom: 36px;
+  }
+
+  .section-label {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  label span {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  input, select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color .15s;
+    width: 100%;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  input[type=range] {
+    padding: 6px 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .url-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: end;
+  }
+
+  button {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    white-space: nowrap;
+  }
+
+  button:hover { opacity: .85; }
+  button:active { transform: scale(.97); }
+
+  .generated-url {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--accent2);
+    word-break: break-all;
+    cursor: pointer;
+    transition: border-color .15s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 48px;
+  }
+
+  .generated-url:hover { border-color: var(--accent2); }
+
+  .copy-hint {
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .preview-box {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: repeating-conic-gradient(#1a1a1a 0% 25%, #111 0% 50%) 0 0 / 20px 20px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .preview-box img {
+    max-width: 100%;
+    max-height: 500px;
+    display: block;
+  }
+
+  .preview-placeholder {
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .meta-bar {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .meta-bar strong {
+    color: var(--text);
+  }
+
+  .error-msg {
+    color: #ff4444;
+    font-size: 12px;
+    margin-top: 8px;
+    display: none;
+  }
+
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .docs {
+    margin-top: 48px;
+    border-top: 1px solid var(--border);
+    padding-top: 32px;
+  }
+
+  .param-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .param-table th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .param-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #181818;
+    vertical-align: top;
+  }
+
+  .param-table tr:hover td { background: #111; }
+
+  code {
+    background: #1a1a1a;
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .copied {
+    color: var(--accent) !important;
+  }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>imgproxy</h1>
+    </div>
+    <span class="badge">wsrv-compatible · Vercel</span>
+  </header>
+
+  <div class="section">
+    <div class="section-label">Source URL</div>
+    <div class="url-row">
+      <div class="field">
+        <input type="text" id="srcUrl" placeholder="https://example.com/image.jpg" />
+      </div>
+      <button onclick="generate()">Generate</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Parameters</div>
+    <div class="grid">
+      <div class="field">
+        <label>Width <span id="wVal">—</span></label>
+        <input type="number" id="w" placeholder="e.g. 800" min="0" max="5000" oninput="document.getElementById('wVal').textContent = this.value || '—'" />
+      </div>
+      <div class="field">
+        <label>Height <span id="hVal">—</span></label>
+        <input type="number" id="h" placeholder="e.g. 600" min="0" max="5000" oninput="document.getElementById('hVal').textContent = this.value || '—'" />
+      </div>
+      <div class="field">
+        <label>Quality <span id="qVal">85</span></label>
+        <input type="range" id="q" min="1" max="100" value="85" oninput="document.getElementById('qVal').textContent = this.value" />
+      </div>
+      <div class="field">
+        <label>Fit</label>
+        <select id="fit">
+          <option value="inside">inside (default)</option>
+          <option value="cover">cover / crop</option>
+          <option value="contain">contain / letterbox</option>
+          <option value="fill">fill / stretch</option>
+          <option value="outside">outside</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Output Format</label>
+        <select id="output">
+          <option value="">auto (keep original)</option>
+          <option value="webp">WebP</option>
+          <option value="jpeg">JPEG</option>
+          <option value="png">PNG</option>
+          <option value="avif">AVIF</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>DPR <span id="dprVal">1×</span></label>
+        <input type="range" id="dpr" min="1" max="3" step="0.5" value="1" oninput="document.getElementById('dprVal').textContent = this.value + '×'" />
+      </div>
+      <div class="field">
+        <label>Blur <span id="blurVal">0</span></label>
+        <input type="range" id="blur" min="0" max="20" value="0" oninput="document.getElementById('blurVal').textContent = this.value" />
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Generated URL</div>
+    <div class="generated-url" id="generatedUrl" onclick="copyUrl()">
+      <span id="urlText" style="color:#333">— fill in parameters above —</span>
+      <span class="copy-hint" id="copyHint">click to copy</span>
+    </div>
+    <div class="error-msg" id="errMsg"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Preview</div>
+    <div class="preview-box" id="previewBox">
+      <div class="preview-placeholder" id="placeholder">
+        <div class="spinner" id="spinner"></div>
+        <div id="placeholderText">Generate a URL to preview the result</div>
+      </div>
+    </div>
+    <div class="meta-bar" id="metaBar" style="display:none">
+      <div>Time: <strong id="metaTime">—</strong></div>
+      <div>Size: <strong id="metaSize">—</strong></div>
+      <div>Format: <strong id="metaFormat">—</strong></div>
+    </div>
+  </div>
+
+  <div class="docs">
+    <div class="section-label" style="margin-bottom:16px">API Reference</div>
+    <p style="color:var(--muted); margin-bottom:16px; line-height:1.6">
+      Endpoint: <code>/api/image?url=&lt;encoded-url&gt;&amp;w=800&amp;q=85</code>
+    </p>
+    <table class="param-table">
+      <thead>
+        <tr>
+          <th>Param</th>
+          <th>Alias</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>url</code></td><td>—</td><td>Source image URL (URL-encoded)</td><td>required</td></tr>
+        <tr><td><code>w</code></td><td><code>width</code></td><td>Target width in pixels</td><td>original</td></tr>
+        <tr><td><code>h</code></td><td><code>height</code></td><td>Target height in pixels</td><td>original</td></tr>
+        <tr><td><code>q</code></td><td><code>quality</code></td><td>Output quality 1–100</td><td>85</td></tr>
+        <tr><td><code>fit</code></td><td>—</td><td>inside · cover · contain · fill · outside · crop · letterbox</td><td>inside</td></tr>
+        <tr><td><code>output</code></td><td>—</td><td>webp · jpeg · png · avif · gif</td><td>auto</td></tr>
+        <tr><td><code>dpr</code></td><td>—</td><td>Device pixel ratio multiplier (1–8)</td><td>1</td></tr>
+        <tr><td><code>blur</code></td><td>—</td><td>Blur sigma 0–100</td><td>0</td></tr>
+        <tr><td><code>sharp</code></td><td>—</td><td>Sharpen amount 0–100</td><td>0</td></tr>
+        <tr><td><code>a</code></td><td>—</td><td>Alignment/gravity: center · top · left · right · bottom · entropy · attention</td><td>center</td></tr>
+        <tr><td><code>bg</code></td><td><code>cbg</code></td><td>Background color hex (for contain letterbox)</td><td>transparent</td></tr>
+        <tr><td><code>we</code></td><td>—</td><td>Allow enlargement (1=yes)</td><td>0</td></tr>
+        <tr><td><code>page</code></td><td>—</td><td>Page/frame index (GIF/TIFF/PDF)</td><td>0</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  const BASE = window.location.origin;
+
+  function generate() {
+    const url = document.getElementById('srcUrl').value.trim();
+    if (!url) return;
+
+    const params = new URLSearchParams();
+    params.set('url', url);
+
+    const w = document.getElementById('w').value;
+    const h = document.getElementById('h').value;
+    const q = document.getElementById('q').value;
+    const fit = document.getElementById('fit').value;
+    const output = document.getElementById('output').value;
+    const dpr = document.getElementById('dpr').value;
+    const blur = document.getElementById('blur').value;
+
+    if (w) params.set('w', w);
+    if (h) params.set('h', h);
+    params.set('q', q);
+    if (fit && fit !== 'inside') params.set('fit', fit);
+    if (output) params.set('output', output);
+    if (parseFloat(dpr) !== 1) params.set('dpr', dpr);
+    if (parseInt(blur) > 0) params.set('blur', blur);
+
+    const finalUrl = `${BASE}/api/image?${params.toString()}`;
+    document.getElementById('urlText').textContent = finalUrl;
+    document.getElementById('urlText').style.color = '';
+
+    loadPreview(finalUrl);
+  }
+
+  function loadPreview(url) {
+    const box = document.getElementById('previewBox');
+    const spinner = document.getElementById('spinner');
+    const placeholder = document.getElementById('placeholder');
+    const placeholderText = document.getElementById('placeholderText');
+    const metaBar = document.getElementById('metaBar');
+    const errMsg = document.getElementById('errMsg');
+
+    // Remove old image
+    const old = box.querySelector('img');
+    if (old) old.remove();
+
+    spinner.style.display = 'block';
+    placeholderText.textContent = 'Loading…';
+    placeholder.style.display = 'flex';
+    metaBar.style.display = 'none';
+    errMsg.style.display = 'none';
+
+    const t0 = performance.now();
+
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const ct = res.headers.get('content-type') || '';
+        const fmt = ct.split('/')[1]?.split(';')[0] || '?';
+        return res.blob().then(blob => ({ blob, fmt }));
+      })
+      .then(({ blob, fmt }) => {
+        const elapsed = Math.round(performance.now() - t0);
+        const size = (blob.size / 1024).toFixed(1) + ' KB';
+
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(blob);
+        img.onload = () => {
+          placeholder.style.display = 'none';
+          box.appendChild(img);
+          document.getElementById('metaTime').textContent = elapsed + 'ms';
+          document.getElementById('metaSize').textContent = size;
+          document.getElementById('metaFormat').textContent = fmt;
+          metaBar.style.display = 'flex';
+        };
+      })
+      .catch(err => {
+        spinner.style.display = 'none';
+        placeholderText.textContent = 'Preview not available in static mode.';
+        errMsg.textContent = err.message;
+        errMsg.style.display = 'block';
+      });
+  }
+
+  function copyUrl() {
+    const text = document.getElementById('urlText').textContent;
+    if (text.startsWith('—')) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const hint = document.getElementById('copyHint');
+      hint.textContent = 'copied!';
+      hint.classList.add('copied');
+      setTimeout(() => {
+        hint.textContent = 'click to copy';
+        hint.classList.remove('copied');
+      }, 1500);
+    });
+  }
+
+  // Enter key on URL input
+  document.getElementById('srcUrl').addEventListener('keydown', e => {
+    if (e.key === 'Enter') generate();
+  });
+</script>
+</body>
+</html>
