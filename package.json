@@ -1,18 +1,12 @@
 {
-  "name": "Image Proxy",
+  "name": "image-proxy",
   "version": "1.0.0",
-  "main": "api/gambar.js",
-  "scripts": {
-    "dev": "vercel dev",
-    "deploy": "vercel --prod"
-  },
+  "description": "wsrv.nl-like image resize proxy for Vercel",
+  "private": true,
   "dependencies": {
-    "sharp": "^0.33.0"
-  },
-  "devDependencies": {
-    "@vercel/node": "^3.0.0"
+    "sharp": "^0.33.4"
   },
   "engines": {
-    "node": "22.x"
+    "node": ">=24"
   }
 }
