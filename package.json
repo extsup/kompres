@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "wsrv.nl-like image resize proxy for Vercel",
   "private": true,
+  "type": "module",
   "dependencies": {
     "sharp": "^0.33.4"
   },
