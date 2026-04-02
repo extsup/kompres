@@ -1,10 +1,11 @@
 {
+  "regions": ["sin1"],
   "rewrites": [
     { "source": "/img", "destination": "/api/image" }
   ],
   "functions": {
     "api/image.js": {
-      "memory": 1024,
+      "memory": 3008,
       "maxDuration": 15
     }
   },
