@@ -5,7 +5,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "sharp": "^0.33.4"
+    "sharp": "^0.33.4",
+    "formidable": "^3.5.1"
   },
   "engines": {
     "node": ">=24"
