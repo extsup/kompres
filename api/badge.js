@@ -1,33 +1,32 @@
 export default function handler(req, res) {
-  const { type = 'fb', text = 'Sup Kelelawar', w = '200', h = '44' } = req.query;
-  
-  const width = parseInt(w);
-  const height = parseInt(h);
+  const { type = 'fb', text = 'Sup Kelelawar' } = req.query;
+
   const configs = {
     fb: {
       color: '#1877F2',
-      icon: `<path d='M${height*0.5} ${height*0.2}h-${height*0.15}c-${height*0.08} 0-${height*0.17} ${height*0.07}-${height*0.17} ${height*0.17}v${height*0.15}h-${height*0.12}v${height*0.17}h${height*0.12}v${height*0.33}h${height*0.17}v-${height*0.33}h${height*0.12}l${height*0.04}-${height*0.17}h-${height*0.17}v-${height*0.12}c0-${height*0.02} ${height*0.02}-${height*0.04} ${height*0.04}-${height*0.04}h${height*0.12}V${height*0.2}z' fill='white'/>`,
+      icon: `<path d='M9 3H7C4.8 3 3 4.8 3 7v2H1v3h2v7h4v-7h2.5L10 9H7V7c0-.6.4-1 1-1h2V3z' fill='white'/>`
     },
     tg: {
       color: '#2CA5E0',
-      icon: `<path d='M${height*0.5} ${height*0.15}a${height*0.35} ${height*0.35} 0 1 0 0 ${height*0.7}a${height*0.35} ${height*0.35} 0 0 0 0-${height*0.7}zm${height*0.17} ${height*0.18}l-${height*0.08} ${height*0.39}c-${height*0.01} ${height*0.02}-${height*0.02} ${height*0.03}-${height*0.04} ${height*0.02}l-${height*0.11}-${height*0.08}-${height*0.06} ${height*0.05}c-${height*0.01} ${height*0.01}-${height*0.03} ${height*0.01}-${height*0.03}-${height*0.01}l${height*0.01}-${height*0.12} ${height*0.21}-${height*0.19}c${height*0.01}-${height*0.01} 0-${height*0.02}-${height*0.01}-${height*0.01}l-${height*0.27} ${height*0.17}-${height*0.11}-${height*0.04}c-${height*0.02}-${height*0.01}-${height*0.02}-${height*0.04} ${height*0.01}-${height*0.05}l${height*0.44}-${height*0.17}c${height*0.02}-${height*0.01} ${height*0.05} 0 ${height*0.04} ${height*0.04}z' fill='white'/>`,
+      icon: `<path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.68 7.94c-.12.54-.46.67-.93.42l-2.58-1.9-1.24 1.2c-.14.14-.26.26-.53.26l.19-2.72 4.96-4.48c.22-.19-.05-.3-.33-.11L7.9 13.7l-2.54-.8c-.55-.17-.56-.55.12-.82l9.91-3.82c.46-.17.86.11.71.82-.01-.01-.01-.01.54-.28z' fill='white'/>`
     }
   };
 
   const cfg = configs[type] || configs.fb;
-  const iconSize = height * 0.55;
-  const iconX = height * 0.22;
-  const iconY = (height - iconSize) / 2;
-  const fontSize = Math.round(height * 0.36);
-  const textX = height * 0.95;
-  const textY = height * 0.64;
+  const h = 32;
+  const fontSize = 13;
+  const iconSize = 18;
+  const padding = 10;
+  const gap = 6;
+  const textLen = text.length * 7.5;
+  const width = padding + iconSize + gap + textLen + padding;
 
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}'>
-  <rect width='${width}' height='${height}' rx='6' fill='${cfg.color}'/>
-  <svg x='${iconX}' y='${iconY}' width='${iconSize}' height='${iconSize}' viewBox='0 0 ${height} ${height}'>
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${h}'>
+  <rect width='${width}' height='${h}' rx='5' fill='${cfg.color}'/>
+  <svg x='${padding}' y='${(h-iconSize)/2}' width='${iconSize}' height='${iconSize}' viewBox='0 0 24 24'>
     ${cfg.icon}
   </svg>
-  <text x='${textX}' y='${textY}' font-family='Arial' font-size='${fontSize}' font-weight='bold' fill='white'>${text}</text>
+  <text x='${padding+iconSize+gap}' y='${h*0.65}' font-family='Arial' font-size='${fontSize}' font-weight='bold' fill='white'>${text}</text>
 </svg>`;
 
   res.setHeader('Content-Type', 'image/svg+xml');
