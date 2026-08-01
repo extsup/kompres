@@ -6,7 +6,7 @@ export default function handler(req, res) {
       color: '#1877F2',
       icon: `
         <circle cx='12' cy='12' r='10' fill='white'/>
-        <path d='M13.5 7H12C10.3 7 9 8.3 9 10v2H7v2.5h2V21h3v-6.5h2l.5-2.5H12V10c0-.3.2-.5.5-.5H14V7z' fill='#1877F2'/>`
+        <path d='M14 7h-1.5C11.1 7 10 8.1 10 9.5V11H8.5v2.5H10V19h3v-5.5h2l.5-2.5H13V9.5c0-.3.2-.5.5-.5H15V7z' fill='#1877F2'/>`
     },
     tg: {
       color: '#2CA5E0',
