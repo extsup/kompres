@@ -4,7 +4,9 @@ export default function handler(req, res) {
   const configs = {
     fb: {
       color: '#1877F2',
-      icon: `<path d='M9 3H7C4.8 3 3 4.8 3 7v2H1v3h2v7h4v-7h2.5L10 9H7V7c0-.6.4-1 1-1h2V3z' fill='white'/>`
+      icon: `
+        <circle cx='12' cy='12' r='10' fill='white'/>
+        <path d='M13.5 7H12C10.3 7 9 8.3 9 10v2H7v2.5h2V21h3v-6.5h2l.5-2.5H12V10c0-.3.2-.5.5-.5H14V7z' fill='#1877F2'/>`
     },
     tg: {
       color: '#2CA5E0',
@@ -15,8 +17,8 @@ export default function handler(req, res) {
   const cfg = configs[type] || configs.fb;
   const h = 32;
   const fontSize = 13;
-  const iconSize = 18;
-  const padding = 10;
+  const iconSize = 20;
+  const padding = 8;
   const gap = 6;
   const textLen = text.length * 7.5;
   const width = padding + iconSize + gap + textLen + padding;
